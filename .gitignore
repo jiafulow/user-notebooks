@@ -1,0 +1,17 @@
+# Python
+__pycache__
+*.pkl
+*.npy
+*.npz
+.ipynb_checkpoints
+
+# Keras
+*.h5
+*.json
+
+# Other
+*~
+*.log
+*.orig
+*.bak
+*.out
