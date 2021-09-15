@@ -77,6 +77,38 @@ def get_colormap():
   return cm
 
 
+# matplotlib hist2d takes the (x, y) arrays as input, do the binning and plot;
+# This hist2d takes a single, already-binned, array and the edges as input, and plot.
+#
+# Based on root2matplotlib from rootpy:
+#     http://www.rootpy.org/_modules/rootpy/plotting/root2matplotlib.html#hist2d
+#
+def hist2d_on_binned_data(hist, xedges, yedges, colorbar=False, ax=None, **kwargs):
+  from matplotlib.pyplot import gca
+  if ax is None:
+    ax = gca()
+  xdata = (xedges[1:] + xedges[:-1]) / 2
+  ydata = (yedges[1:] + yedges[:-1]) / 2
+  xv, yv = np.meshgrid(xdata, ydata)
+  x = xv.ravel()
+  y = yv.ravel()
+  z = hist.T.ravel()
+  h, xedges, yedges, image = ax.hist2d(x, y, weights=z, bins=(xedges, yedges), **kwargs)
+  if colorbar:
+    cb = ax.figure.colorbar(image, ax=ax)
+  return (h, xedges, yedges, image)
+
+
+# Same as above but for 1d
+def hist_on_binned_data(hist, edges, ax=None, **kwargs):
+  from matplotlib.pyplot import gca
+  if ax is None:
+    ax = gca()
+  x = (edges[1:] + edges[:-1]) / 2
+  h, edges, patches = ax.hist(x, weights=hist, bins=edges, **kwargs)
+  return (h, edges, patches)
+
+
 # Create a module within a module
 emtf_nbtools = types.ModuleType('emtf_nbtools')
 
@@ -84,15 +116,15 @@ emtf_nbtools = types.ModuleType('emtf_nbtools')
 def export_to_emtf_nbtools(name):
   """A decorator with argument that adds a fn to the emtf_nbtools module."""
 
-  def decorator(fn):
+  def outer_wrapper(fn):
     @functools.wraps(fn)
-    def wrapper(*args, **kwargs):
+    def inner_wrapper(*args, **kwargs):
       return fn(*args, **kwargs)
 
-    setattr(emtf_nbtools, name, wrapper)
-    return wrapper
+    setattr(emtf_nbtools, name, inner_wrapper)
+    return inner_wrapper
 
-  return decorator
+  return outer_wrapper
 
 
 @export_to_emtf_nbtools('gaus')
